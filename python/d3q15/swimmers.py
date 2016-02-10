@@ -285,7 +285,7 @@ class SwimmerArray(d3q15.XArray):
             if self.walls:
                 # make sure the unwrapped coords do respect the walls
                 # by copying in the actual z
-                self.s[2] = self.r[2]
+                self.s[:,2] = self.r[:,2]
         return
     
     def applyTurn(self, lattice, nDots):
