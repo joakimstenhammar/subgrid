@@ -303,6 +303,35 @@ class SolidWalledLatticeWithStuff(LatticeWithStuff):
     
     pass
 
+class BoxedLatticeWithStuff(LatticeWithStuff):
+    """Implements a Lattice which contains things and has stationary,
+    solid walls in the xyz directions. See LatticeWithStuff's & Lattice's
+    docstrings for full details.
+    
+    Added Things must have a method respectsWalls that returns 'xyz'.
+    
+    You MUST NOT set the forcing function (this is taken care of).
+    You MUST NOT set the boundary condition function (this is taken care of).
+    
+    """
+    def __init__(self, *args):
+	LatticeWithStuff.__init__(self, *args)
+	self.initBoundaryC('box')
+	return
+    
+    def add(self, thingClass, *args, **kwargs):
+	th = LatticeWithStuff.add(self, thingClass, *args, **kwargs)
+        try:
+            assert th.respectsWalls() == 'xyz'
+        except AssertionError:
+            del self.things[-1]
+            raise
+        
+	return th
+    
+    pass
+
+	
 	
 class BodyForce(Thing):
     """A special Thing that ensures there is no net force on the

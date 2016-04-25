@@ -35,7 +35,8 @@ class SwimmerArray(d3q15.XArray):
 
         Optional keyword arguments:
           randSeed: seed for the PRNG. Zero => init from /dev/urandom
-          walls: flag indicating whether the Lattice has walls
+          walls: flag indicating whether the Lattice has walls in the z-direction
+          box: flag indicating whether the Lattice has walls in xyz-directions
           tumbles: flag indicating whether the particles tumble
           tumbleProb: required if tumble given
           sinks: flag indicating an external force
@@ -72,10 +73,11 @@ class SwimmerArray(d3q15.XArray):
         self.__setattr__('tumbles', True)
         self.__setattr__('tracks', True)
         self.__setattr__('walls', False)
+        self.__setattr__('box', False)
         self.__setattr__('sinks', False)
         self.__setattr__('forced', False)
 
-        for flag in ['swims', 'advects', 'rotates', 'tumbles', 'tracks', 'walls', 'sinks', 'forced']:
+        for flag in ['swims', 'advects', 'rotates', 'tumbles', 'tracks', 'walls', 'box', 'sinks', 'forced']:
             try:
                 if kwargs[flag]:
                     self.__setattr__(flag, True)
@@ -128,6 +130,13 @@ class SwimmerArray(d3q15.XArray):
             assert N.all(r_list[:, 1] <= L.ny+0.5)
             assert N.all(r_list[:, 2] <= L.nz+0.5)
             if self.walls:
+                assert N.all(r_list[:,2] > 2.)
+                assert N.all(r_list[:,2] < L.nz-1.)
+            if self.box:
+                assert N.all(r_list[:,0] > 2.)
+                assert N.all(r_list[:,0] < L.nx-1.)
+                assert N.all(r_list[:,1] > 2.)
+                assert N.all(r_list[:,1] < L.ny-1.)
                 assert N.all(r_list[:,2] > 2.)
                 assert N.all(r_list[:,2] < L.nz-1.)
         except AssertionError:
@@ -263,6 +272,50 @@ class SwimmerArray(d3q15.XArray):
                 pass
             pass
         
+        if self.box:
+            latupp = N.zeros(3)
+            latupp[0] = lattice.nx
+            latupp[1] = lattice.ny
+            latupp[2] = lattice.nz
+            for a in range (0,3):
+                ind = N.where(r_[:,a] < 2)
+                if len(ind[0]):
+                    z0 = self.r[ind][:, a]
+                    # times to bottom is tau
+                    tau = (2. - z0) / rdots[ind][:, a]
+                    # set intermediate posn
+                    r_[ind] = self.r[ind] + rdots[ind] * tau[:, N.newaxis]
+                
+                    # randomize direction, to upper half sphere
+                    for i in ind[0]:
+                        self.n[i] = self.randState.unitVector(3)
+                        self.n[i, a] = N.abs(self.n[i, a])
+                        continue
+                
+                    # move v*(1 - tau) in the new direction
+                    r_[ind] += norm(rdots[ind])[:, N.newaxis] * (1. - tau[:, N.newaxis]) * self.n[ind]
+                    pass
+                
+                ind = N.where(r_[:,a] > latupp[a] - 1)
+                if len(ind[0]):
+                    z0 = self.r[ind][:, a]
+                    # times to top is tau
+                    tau = (latupp[a] - 1 - z0) / rdots[ind][:, a]
+                    # set intermediate posn
+                    r_[ind] = self.r[ind] + rdots[ind] * tau[:, N.newaxis]
+                
+                    # randomize direction, to lower half sphere
+                    for i in ind[0]:
+                        self.n[i] = self.randState.unitVector(3)
+                        self.n[i, a] = -N.abs(self.n[i, a])
+                        continue
+                
+                    # move v*(1 - tau) in the new direction
+                    r_[ind] += norm(rdots[ind])[:, N.newaxis] * (1. - tau[:, N.newaxis]) * self.n[ind]
+                    pass
+                pass
+
+        
         # Check that it's not moved off the edge of the lattice
         min = N.array([0.5, 0.5, 0.5])
         size = lattice.size
@@ -285,6 +338,11 @@ class SwimmerArray(d3q15.XArray):
             if self.walls:
                 # make sure the unwrapped coords do respect the walls
                 # by copying in the actual z
+                self.s[:,2] = self.r[:,2]
+
+            if self.box:
+                self.s[:,0] = self.r[:,0]
+                self.s[:,1] = self.r[:,1]
                 self.s[:,2] = self.r[:,2]
         return
     
@@ -336,6 +394,8 @@ class SwimmerArray(d3q15.XArray):
     def respectsWalls(self):
         if self.walls:
             return 'z'
+        if self.box:
+            return 'xyz'
         else:
             return ''
     

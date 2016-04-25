@@ -63,6 +63,9 @@ void bc_noslip_init(Lattice *lat);
 void bc_noslip_update(Lattice *lat);
 void bc_noslip_do_site(Lattice *lat, int i[DQ_d], int n[DQ_d]);
 
+void bc_box_init(Lattice *lat);
+void bc_box_update(Lattice *lat);
+
 void bc_freeslip_init(Lattice *lat);
 void bc_freeslip_update(Lattice *lat);
 void bc_freeslip_do_site(Lattice *lat, int i[DQ_d], int n[DQ_d]);

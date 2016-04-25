@@ -23,7 +23,8 @@ class FallerArray(d3q15.XArray):
 
         Optional keyword arguments:
           randSeed: seed for PRNG, seeded from /dev/urandom if absent
-          walls: flag indicating whether the Lattice has walls
+          box: flag indicating whether the Lattice has walls in the z direction
+          walls: flag indicating whether the Lattice has walls in all directions
           pd: flag indicating whether to use the potential dipole term
           static: flag indicating whether to keep the particles fixed
           tracks: flag indicating whether to track the unwrapped position
@@ -46,7 +47,7 @@ class FallerArray(d3q15.XArray):
         except KeyError:
             randSeed = 0
         
-        for flag in ['walls', 'pd', 'static', 'tracks']:
+        for flag in ['walls', 'box', 'pd', 'static', 'tracks']:
             try:
                 if kwargs[flag]:
                     self.__setattr__(flag, True)
@@ -83,6 +84,17 @@ class FallerArray(d3q15.XArray):
             raise ValueError("zcoordinate out of range")
 
         if self.walls:
+            if not (N.alltrue(r_list[:,2] > 2) and
+                    N.alltrue(r_list[:,2] <= L.nz - 1)):
+                raise ValueError("z-coordinate out of range due to walls")
+
+        if self.box:
+            if not (N.alltrue(r_list[:,0] > 2) and
+                    N.alltrue(r_list[:,0] <= L.nx - 1)):
+                raise ValueError("x-coordinate out of range due to walls")
+            if not (N.alltrue(r_list[:,1] > 1) and
+                    N.alltrue(r_list[:,1] <= L.ny - 1)):
+                raise ValueError("y-coordinate out of range due to walls")
             if not (N.alltrue(r_list[:,2] > 2) and
                     N.alltrue(r_list[:,2] <= L.nz - 1)):
                 raise ValueError("z-coordinate out of range due to walls")
@@ -169,6 +181,8 @@ class FallerArray(d3q15.XArray):
     def respectsWalls(self):
         if self.walls:
             return 'z'
+        if self.box:
+            return 'xyz'
         else:
             return ''
         

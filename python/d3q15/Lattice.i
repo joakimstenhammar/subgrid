@@ -43,6 +43,7 @@ EXC_CHECK(setForcePy)
 /* EXC_CHECK(setBoundaryC) */
 EXC_CHECK(__initBC_periodic)
 EXC_CHECK(__initBC_noslip)
+EXC_CHECK(__initBC_box)
 EXC_CHECK(__initBC_freeslip)
 EXC_CHECK(__initBC_wall)
 EXC_CHECK(step)
@@ -185,7 +186,12 @@ EXC_CHECK(force_set)
     bc_noslip_init($self);
     $self->bc_func = bc_noslip_update;
   }
-  
+
+  void __initBC_box() {
+    bc_box_init($self);
+    $self->bc_func = bc_box_update;
+  }
+    
   void __initBC_freeslip() {
     bc_freeslip_init($self);
     $self->bc_func = bc_freeslip_update;
@@ -223,7 +229,9 @@ EXC_CHECK(force_set)
         
         noslip -- stationary solid walls in the z-direction, PBC in x- and y-
                   no further arguments
-        
+       
+        box    -- solid walls in all directions
+ 
         wall -- tangentially moving, possibly oscillating solid walls in z, 
                 PBC in x & y
                 Arguments:
@@ -247,6 +255,8 @@ EXC_CHECK(force_set)
             self.__initBC_periodic()
         elif name == 'noslip':
             self.__initBC_noslip()
+        elif name == 'box':
+            self.__initBC_box()
         elif name == 'freeslip':
             self.__initBC_freeslip()
         elif name == 'wall':
