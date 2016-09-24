@@ -65,6 +65,11 @@ class SwimmerArray(d3q15.XArray):
         except KeyError:
             randSeed = 0
 
+        try:
+            b = kwargs['beta']
+        except KeyError:
+            b = 1.0
+
         # Set default options
         self.__setattr__('swims', True)
         self.__setattr__('advects', True)
@@ -112,6 +117,7 @@ class SwimmerArray(d3q15.XArray):
         self.tableAppend('P',1)
         self.tableAppend('a',1)
         self.tableAppend('l',1)
+        self.tableAppend('b',1)
         if self.tumbles:
             self.tableAppend('t',1)
         if self.sinks:
@@ -151,6 +157,7 @@ class SwimmerArray(d3q15.XArray):
         self.P = P
         self.a = a
         self.l = l
+        self.b = b
 
         self.randState = randomUnitVector.RandomState(randSeed)
         self.noiseStDev = 0.
@@ -195,17 +202,16 @@ class SwimmerArray(d3q15.XArray):
             rDot += v
             pass
         
-        # rPlus = self.r
         nDot = N.zeros([self.num,3])   
-        if self.rotates: 
+        if self.rotates:
             rMinus = self.r - self.n * self.l
-            # from above, v = v(rPlus)
-            nDot += v - self._interp(lattice, rMinus)
-            # now nDot = v(rPlus) - v(rMinus)
-            # so divide by l to get the rate
-            nDot /= self.l
+            nDot += 0.5*(self.b + 1.0)*(v - self._interp(lattice, rMinus)) / self.l # v = v(r), from before
+            for i in range (0,3): 
+                rPlus = self.r + self.a*N.identity(3)[i]
+                dv = (self._interp(lattice, rPlus) - v) / self.a
+                nDot[:,i] += 0.5*(self.b[:,0]-1.0)*N.sum(dv*self.n,axis=-1)
             pass
-
+ 
         self.applyMove(lattice, rDot)
         self.applyTurn(lattice, nDot)
         
