@@ -315,10 +315,21 @@ EXC_CHECK(force_set)
    */
   void initFromHydroVars() {
     int i, j, k;
+    int a;
+    double u[DQ_d], force[DQ_d];
+
     for (i=1; i<=$self->nx; i++)
       for (j=1; j<=$self->ny; j++)
-	for (k=1; k<=$self->nz; k++)
-	  calc_equil(DQ_rho_get($self,i,j,k), &DQ_u_get($self, i,j,k,0), &DQ_f_get($self, i,j,k,0));
+	for (k=1; k<=$self->nz; k++) {
+	  for (a=0; a<DQ_d; a++) {
+            u[a] = DQ_u_get($self, i,j,k, a);
+            force[a] = DQ_force_get($self, i,j,k, a);
+            u[a] += 0.5*force[a];
+/*          if(u[a] != 0.0) printf("%5i %5i %5i %5i %15.10e \n", i,j,k, a, u[a]); */
+          }  
+/*	  calc_equil(DQ_rho_get($self,i,j,k), &DQ_u_get($self, i,j,k,0), &DQ_f_get($self, i,j,k,0)); */
+	  calc_equil(DQ_rho_get($self,i,j,k), u, &DQ_f_get($self, i,j,k,0));
+        }
   }
 
   /* pseduo method wrapper */
