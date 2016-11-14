@@ -104,7 +104,6 @@ class Controller(object):
         
         """
         self.lat.step(1)
-
         if self.isRecordStep():
             self.log('Time step %d of %d' %
                      (self.lat.time_step, self.totalSteps))

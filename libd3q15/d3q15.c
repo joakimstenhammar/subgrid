@@ -133,9 +133,9 @@ void propagate (Lattice *lat) {
     for (j=0; j<=ny+1; j++) {
       for (k=0; k<=nz+1; k++) {
 	/* propagate */
-	
+
 	/* [1,0,0] */
-	if (i<=nx)
+	if (i<=nx) 
 	  swap(DQ_f_get(lat, i,j,k, 1), DQ_f_get(lat, i+1,j,k, 2), tmp);
 	/* [0,1,0] */
 	if (j<=ny)
@@ -158,21 +158,21 @@ void propagate (Lattice *lat) {
 	  swap(DQ_f_get(lat, i,j,k, 10),DQ_f_get(lat, i+1, j-1, k-1, 11), tmp);
 	
 	/* reorder */
-	//if (i<=nx)
-	swap(DQ_f_get(lat, i,j,k, 1), DQ_f_get(lat, i,j,k, 2), tmp);
+  	//if (i<=nx)
+  	swap(DQ_f_get(lat, i,j,k, 1), DQ_f_get(lat, i,j,k, 2), tmp); 
 	//if (j<=ny)
-	swap(DQ_f_get(lat, i,j,k, 3), DQ_f_get(lat, i,j,k, 4), tmp);
+  	swap(DQ_f_get(lat, i,j,k, 3), DQ_f_get(lat, i,j,k, 4), tmp);
 	//if (k<=nz)
-	swap(DQ_f_get(lat, i,j,k, 5), DQ_f_get(lat, i,j,k, 6), tmp);
+  	swap(DQ_f_get(lat, i,j,k, 5), DQ_f_get(lat, i,j,k, 6), tmp);
 	
 	//if (i<=nz && j<=ny && k<=nz)
-	swap(DQ_f_get(lat, i,j,k, 7), DQ_f_get(lat, i,j,k, 14), tmp);
+  	swap(DQ_f_get(lat, i,j,k, 7), DQ_f_get(lat, i,j,k, 14), tmp);
 	//if (i<=nz && j<=ny && k>0)
-	swap(DQ_f_get(lat, i,j,k, 8), DQ_f_get(lat, i,j,k, 13), tmp);
+  	swap(DQ_f_get(lat, i,j,k, 8), DQ_f_get(lat, i,j,k, 13), tmp);
 	//if (i<=nz && j>0 && k<=nz)
-	swap(DQ_f_get(lat, i,j,k, 9), DQ_f_get(lat, i,j,k, 12), tmp);
+  	swap(DQ_f_get(lat, i,j,k, 9), DQ_f_get(lat, i,j,k, 12), tmp);  
 	//if (i<=nz && j>0 && k>0)
-	swap(DQ_f_get(lat, i,j,k, 10),DQ_f_get(lat, i,j,k, 11), tmp);
+  	swap(DQ_f_get(lat, i,j,k, 10),DQ_f_get(lat, i,j,k, 11), tmp); 
       }
     }
   }
@@ -184,8 +184,9 @@ void calc_hydro_site(Site *site, Lattice* lat) {
   int i, a;
   double rho = 0;
   double mom[DQ_d];
+
   for (a=0; a<DQ_d; a++) {
-    mom[a] = site->force[a] / 2.0;
+    mom[a] = 0.0;
   }
   
   for (i=0; i<DQ_q; i++) {
@@ -195,16 +196,18 @@ void calc_hydro_site(Site *site, Lattice* lat) {
     }
   }
   site->rho[0] = rho;
+
   for (a=0; a<DQ_d; a++) {
-    site->u[a] = mom[a] / rho;
+    site->u[a] = mom[a] / rho + site->force[a]/2.0;
   }
 }
+
 
 void collide (Lattice *lat) {
   /* loop over cells */
   int i,j,k;
   /* loop indices for dimension */
-  int a;
+  int a,b;
   /* loop indices for velocities & modes */
   int p;
   
@@ -214,19 +217,20 @@ void collide (Lattice *lat) {
   
   const double tau_s = lat->tau_s;
   const double omega_s = 1.0 / (tau_s + 0.5);
-  
+
   for (i=1; i<=lat->nx; i++) {
     for (j=1; j<=lat->ny; j++) {
       for (k=1; k<=lat->nz; k++) {
 	set_site(lat, site, i,j,k);
 
-	calc_hydro_site(&site, lat);
 	// rho & u evaluated at t
+	calc_hydro_site(&site, lat);
 	calc_equil(lat, site.rho[0], site.u, fEq);
 
 	double u_F = 0.0;
-	for (a=0; a<DQ_d; a++)
+	for (a=0; a<DQ_d; a++) { 
 	  u_F += site.u[a]*site.force[a];
+        }
 	
 	for (p=0; p<DQ_q; p++) {
 	  double u_ep = 0.0;
@@ -234,19 +238,24 @@ void collide (Lattice *lat) {
 	  for (a=0; a<DQ_d; a++) {
 	    u_ep += site.u[a] * lat->xi[p][a];
 	    F_ep += site.force[a] * lat->xi[p][a];
+
 	  }
 	  
-	  phi[p] = lat->w[p] * ((F_ep - u_ep) / lat->cs2 +
-				(u_ep * u_F) / (lat->cs2 * lat->cs2));
-	  
-	  
+/*	  phi[p] = lat->w[p] * ((F_ep - u_ep) / lat->cs2 +
+				(u_ep * u_F) / (lat->cs2 * lat->cs2)); */  // Old version
+	 
+          phi[p] = site.rho[0]*lat->w[p] * ((F_ep - u_F) / lat->cs2 +
+                                (u_ep * F_ep) / (lat->cs2 * lat->cs2));    // New version
+
+//        phi[p] = lat->w[p] * (F_ep/lat->cs2); 	                   // Simplified version
+
 	  /* Collide - Eq. (17) */
-	  site.f[p] += omega_s * (tau_s * phi[p] - (site.f[p] - fEq[p]));
+  	  site.f[p] += omega_s * (tau_s * phi[p] - (site.f[p] - fEq[p]));  
+
 	}
       }	/* k */
     } /* j */
   } /* i */
-  
 }
 
 /************************************************************/
@@ -271,7 +280,7 @@ void calc_hydro(Lattice *lat) {
 void calc_equil(Lattice *lat, double rho, double u[], double f_eq[]) {
   int i, a, b;
   const double cs2 = lat->cs2;
-  
+
   for (i = 0; i< DQ_q; i++) {
     double feqi = 1.0;
     for (a = 0; a < DQ_d; a++) {

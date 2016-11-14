@@ -322,9 +322,9 @@ EXC_CHECK(force_set)
       for (j=1; j<=$self->ny; j++)
 	for (k=1; k<=$self->nz; k++) {
 	  double rho = DQ_rho_get($self,i,j,k);
-	  for (a=0; a<DQ_d; a++)
-	    u[a] = DQ_u_get($self, i,j,k, a) - DQ_force_get($self, i,j,k, a) / (2.0 * rho);
-	  
+	  for (a=0; a<DQ_d; a++) {
+  	    u[a] = DQ_u_get($self, i,j,k, a) + DQ_force_get($self, i,j,k, a) / (2.0 * rho);    
+          }
 	  calc_equil($self, rho, u, &DQ_f_get($self, i,j,k,0));
 	}
   }
