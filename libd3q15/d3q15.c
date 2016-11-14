@@ -145,7 +145,7 @@ void propagate (Lattice *lat) {
 	  swap(DQ_f_get(lat, i,j,k, 5), DQ_f_get(lat, i,j,k+1, 6), tmp);
 	
 	/* [1,1,1] */
-	if (i<=nx && j<=ny && k<= nz) 
+	if (i<=nx && j<=ny && k<=nz) 
 	  swap(DQ_f_get(lat, i,j,k, 7), DQ_f_get(lat, i+1, j+1, k+1, 14), tmp);
 	/* [1,1,-1] */
 	if (i<=nx && j<=ny && k>0)
@@ -154,7 +154,7 @@ void propagate (Lattice *lat) {
 	if (i<=nx && j>0 && k<=nz)
 	  swap(DQ_f_get(lat, i,j,k, 9), DQ_f_get(lat, i+1, j-1, k+1, 12), tmp);
 	/* [1,-1,-1] */
-	if (i<=nx && j>0 && k >0)
+	if (i<=nx && j>0 && k>0)
 	  swap(DQ_f_get(lat, i,j,k, 10),DQ_f_get(lat, i+1, j-1, k-1, 11), tmp);
 	
 	/* reorder */
