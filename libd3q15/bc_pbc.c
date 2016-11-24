@@ -72,7 +72,7 @@ void bc_pbc_do_site(Lattice *lat, int i[DQ_d], int n[DQ_d]) {
 	  
 	  if (i[d]==0) {
 	    src[d] = n[d];
-	  } else if (i[d]==n[d]+1) {
+	  } else if (i[d]==(n[d]+1)) {
 	    src[d] = 1;
 	  } else {
 	    src[d] = i[d];

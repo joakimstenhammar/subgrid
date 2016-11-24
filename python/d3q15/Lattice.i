@@ -323,7 +323,9 @@ EXC_CHECK(force_set)
 	for (k=1; k<=$self->nz; k++) {
 	  double rho = DQ_rho_get($self,i,j,k);
 	  for (a=0; a<DQ_d; a++) {
-  	    u[a] = DQ_u_get($self, i,j,k, a) + DQ_force_get($self, i,j,k, a) / (2.0 * rho);    
+/*    	    u[a] = DQ_u_get($self, i,j,k, a) - DQ_force_get($self, i,j,k, a) / (2.0 * rho);    */ 
+    	    u[a] = DQ_u_get($self, i,j,k, a);    
+/*          if(i==2 && j==3 && a == 2) printf("Init %5i %5i %5i %15.10e %15.10e \n", i,j,k, u[a], DQ_force_get($self, i,j,k,a)); */ 
           }
 	  calc_equil($self, rho, u, &DQ_f_get($self, i,j,k,0));
 	}

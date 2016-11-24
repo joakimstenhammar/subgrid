@@ -42,7 +42,9 @@ Lattice *d3q15_init(int nx, int ny, int nz, double tau_s, double tau_b) {
   lat->tau_s = tau_s;
   
   lat->time_step = 0;
-  
+ 
+//printf("%5i %5i %5i %5i \n", lat->f_ptr, lat->rho_ptr, lat->u_ptr, lat->force_ptr);
+ 
   /* Set our function pointers to NULL so we can know if they 
    * are initialised or not. */
   lat->force_func = NULL;
@@ -78,19 +80,23 @@ void d3q15_destroy(Lattice *lat) {
 void d3q15_iterate(Lattice *lat, int n_steps) {
   
   
+  double *totmass;
+  double *totmom[DQ_d];
+
   for (int t=0; t<n_steps; t++) {
+
     /* We have to work out the force first */
     (*lat->force_func)(lat);
     
     /* Collide */
     collide(lat);
-    
+
     /* Update boundary */
     (*lat->bc_func)(lat);
     
     /* Propagate */
     propagate(lat);
-    
+
     lat->time_step++;
   }
 }
@@ -172,7 +178,8 @@ void propagate (Lattice *lat) {
 	//if (i<=nz && j>0 && k<=nz)
   	swap(DQ_f_get(lat, i,j,k, 9), DQ_f_get(lat, i,j,k, 12), tmp);  
 	//if (i<=nz && j>0 && k>0)
-  	swap(DQ_f_get(lat, i,j,k, 10),DQ_f_get(lat, i,j,k, 11), tmp); 
+  	swap(DQ_f_get(lat, i,j,k, 10),DQ_f_get(lat, i,j,k, 11), tmp);    
+
       }
     }
   }
@@ -180,15 +187,15 @@ void propagate (Lattice *lat) {
 
 /************************************************************/
 
-void calc_hydro_site(Site *site, Lattice* lat) {
+void calc_hydro_site(Site *site, Lattice *lat) {
   int i, a;
-  double rho = 0;
+  double rho = 0.0;
   double mom[DQ_d];
 
   for (a=0; a<DQ_d; a++) {
-    mom[a] = 0.0;
+    mom[a] = site->force[a]*0.5;
   }
-  
+
   for (i=0; i<DQ_q; i++) {
     rho += site->f[i];
     for (a=0; a<DQ_d; a++) {
@@ -196,12 +203,10 @@ void calc_hydro_site(Site *site, Lattice* lat) {
     }
   }
   site->rho[0] = rho;
-
   for (a=0; a<DQ_d; a++) {
-    site->u[a] = mom[a] / rho + site->force[a]/2.0;
+    site->u[a] = mom[a] / rho;
   }
 }
-
 
 void collide (Lattice *lat) {
   /* loop over cells */
@@ -222,11 +227,12 @@ void collide (Lattice *lat) {
     for (j=1; j<=lat->ny; j++) {
       for (k=1; k<=lat->nz; k++) {
 	set_site(lat, site, i,j,k);
+        calc_hydro_site(&site, lat);
 
 	// rho & u evaluated at t
-	calc_hydro_site(&site, lat);
-	calc_equil(lat, site.rho[0], site.u, fEq);
 
+    	calc_equil(lat, site.rho[0], site.u, fEq);
+   
 	double u_F = 0.0;
 	for (a=0; a<DQ_d; a++) { 
 	  u_F += site.u[a]*site.force[a];
@@ -235,18 +241,20 @@ void collide (Lattice *lat) {
 	for (p=0; p<DQ_q; p++) {
 	  double u_ep = 0.0;
 	  double F_ep = 0.0;
+
 	  for (a=0; a<DQ_d; a++) {
 	    u_ep += site.u[a] * lat->xi[p][a];
 	    F_ep += site.force[a] * lat->xi[p][a];
-
 	  }
 	  
 /*	  phi[p] = lat->w[p] * ((F_ep - u_ep) / lat->cs2 +
 				(u_ep * u_F) / (lat->cs2 * lat->cs2)); */  // Old version
 	 
-          phi[p] = site.rho[0]*lat->w[p] * ((F_ep - u_F) / lat->cs2 +
+          phi[p] = lat->w[p] * ((F_ep - u_F) / lat->cs2 +
                                 (u_ep * F_ep) / (lat->cs2 * lat->cs2));    // New version
 
+//        phi[p] = lat->w[p] * ((F_ep - u_F) / lat->cs2);
+         
 //        phi[p] = lat->w[p] * (F_ep/lat->cs2); 	                   // Simplified version
 
 	  /* Collide - Eq. (17) */

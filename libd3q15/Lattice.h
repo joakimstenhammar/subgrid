@@ -80,5 +80,4 @@ typedef struct Site {
                                s.rho   = L->rho_ptr   + ijk;	  \
                                s.u     = L->u_ptr     + ijk*DQ_d; \
                                s.force = L->force_ptr + ijk*DQ_d; }
-
 #endif

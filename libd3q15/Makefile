@@ -2,7 +2,7 @@ LIBDIR = $(HOME)/lib
 INCDIR = $(HOME)/include
 
 CC = icc
-CFLAGS = -Wall -O2 -std=c99 -g -I$(HOME)/include
+CFLAGS = -Wall -O3 -std=c99 -g -I$(HOME)/include
 
 AR = ar rc
 

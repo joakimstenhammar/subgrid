@@ -25,7 +25,7 @@
 					 (k) * L->strides[DQ_Z]) * DQ_d + (m))
 #define DQ_force_get(L, i,j,k, m) *(L->force_ptr + ((i) * L->strides[DQ_X] + \
 						 (j) * L->strides[DQ_Y] + \
-						 (k) * L->strides[DQ_Z])*DQ_d+(m))
+						 (k) * L->strides[DQ_Z]) * DQ_d + (m))
 #define DQ_access_macros
 #include "eigenvectors.h"
 #undef DQ_access_macros
@@ -42,7 +42,8 @@ void d3q15_destroy(Lattice *lat);
 void propagate(Lattice *lat);
 void collide(Lattice *lat);
 
-void calc_equil(Lattice *lat, double rho, double *u, double *f_eq);
+//void calc_equil(Lattice *lat, double rho, double *u, double *f_eq);
+void calc_equil(Lattice *lat, double rho, double u[], double f_eq[]);
 void calc_hydro(Lattice *lat);
 
 void calc_phi(double force[], double rho, double u[], double ans[]);
