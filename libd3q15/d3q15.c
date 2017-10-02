@@ -309,7 +309,7 @@ void dq_collide (const Lattice *lat, const int i, const int j, const int k, doub
 			  mode[DQ_rho]*(u[a]*u[b] -usq*DQ_delta[a][b]));
       
       /* including traceless force */
-      S[a][b] += 2.*omega_s*tau_s * (u[a]*force[b] + force[a]*u[b] - 2. * uDOTf * DQ_delta[a][b]);
+      S[a][b] += omega_s*tau_s * (u[a]*force[b] + force[a]*u[b] - 2. * uDOTf * DQ_delta[a][b]);
     }
     /* add the trace back on */
     S[a][a] += TrS / DQ_d;
